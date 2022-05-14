@@ -1,0 +1,34 @@
+#!/bin/bash
+#-xv
+
+#Comprueba si existe argumento p para el puerto
+if [[ "$1" == "-p" ]];
+then
+   shift
+   puerto=$1
+   shift
+else
+   puerto=22
+fi
+
+#Lee el último argumento del script y verifica
+#si tiene una @ para identificar host y usuario
+
+if [[ "$1" == *"@"* ]]; then
+   user=$( echo $1 | cut -d@ -f1 )
+   equipo=$( echo $1 | cut -d@ -f2 )
+else
+   equipo=$1
+   user=$( whoami )
+fi
+
+carpeta="${HOME}/mnt/${equipo}"
+
+echo usuario = $user, equipo = $equipo
+
+if [ ! -d "${carpeta}" ]; then
+   echo "Creando carpeta ${carpeta}"
+   mkdir -p "${carpeta}"
+fi
+
+sshfs -p ${puerto} -o idmap=user ${equipo}:/home/${user} ${carpeta}
