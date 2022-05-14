@@ -5,30 +5,67 @@
 if [[ "$1" == "-p" ]];
 then
    shift
-   puerto=$1
+   PUERTO=$1
    shift
 else
-   puerto=22
+   PUERTO=22
 fi
 
 #Lee el último argumento del script y verifica
 #si tiene una @ para identificar host y usuario
 
 if [[ "$1" == *"@"* ]]; then
-   user=$( echo $1 | cut -d@ -f1 )
-   equipo=$( echo $1 | cut -d@ -f2 )
+   USER=$( echo $1 | cut -d@ -f1 )
+   HOST=$( echo $1 | cut -d@ -f2 )
 else
-   equipo=$1
-   user=$( whoami )
+   HOST=$1
+   USER=''
 fi
 
-carpeta="${HOME}/mnt/${equipo}"
+comprueba_config() {
+    local a=''
+    local b=''
 
-echo usuario = $user, equipo = $equipo
+    while read a b;
+    do
+        #Comprueba si tenemos alguna entrada al HOST dentro del 
+        #fichero config de ssh
+        if [ "$a" == "Host" ]; then
+            if [ "$b" == "$HOST" ]; then
+                ESTA=1
+            else
+                #Hemos pasado por una entrada de Host pero no es el que buscamos
+                #
+                ESTA=0
+            fi
+        fi
+    
+        #Estamos dentro de una entrada del HOST
+        if [ $ESTA == 1 ]; then
+            #Verificamos si tenemos entrada de Port
+            if [ "$a" == "Port" ]; then
+                PUERTO=$b
+            #Verificamos si tenemos entrada de UserName
+            elif [ "$a" == "User" ]; then
+                USER=$b
+            fi
+        fi
+    done < .ssh/config 
+}   
+
+comprueba_config
+
+if [ "$USER"n == "n"  ]; then
+   USER=$( whoami )
+fi
+
+carpeta="${HOME}/mnt/${HOST}"
+
+echo usuario = $USER, equipo = $HOST
 
 if [ ! -d "${carpeta}" ]; then
    echo "Creando carpeta ${carpeta}"
    mkdir -p "${carpeta}"
 fi
 
-sshfs -p ${puerto} -o idmap=user ${equipo}:/home/${user} ${carpeta}
+sshfs -p ${PUERTO} -o idmap=user ${HOST}:/home/${USER} ${carpeta}
