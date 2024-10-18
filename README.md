@@ -9,6 +9,7 @@ Se necesitará tener instalado el paquete ***sshfs***
 ***pacman -S sshfs***
 
 ## Uso
+Para utilizar el script se le copiará en un directorio que esté dentro del PATH del usuario, por ejemplo ___~/.local/bin___
 El uso de este script será como sigue:
 ~~~
 sshmount [-p puerto] [usuario@]host
