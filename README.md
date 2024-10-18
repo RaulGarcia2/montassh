@@ -1,4 +1,4 @@
-# montassh
+# sshmount
 Script para hacer un montaje sshfs
 
 ## Requisitos
@@ -11,7 +11,7 @@ Se necesitará tener instalado el paquete ***sshfs***
 ## Uso
 El uso de este script será como sigue:
 ~~~
-montassh [-p puerto] [usuario@]host
+sshmount [-p puerto] [usuario@]host
 ~~~
 Este script comprobará la existencia de la carpeta
 ~~~
