@@ -1,6 +1,13 @@
 # montassh
 Script para hacer un montaje sshfs
 
+## Requisitos
+Se necesitará tener instalado el paquete ***sshfs***
+### Debian:
+***apt install sshfs***
+### Archlinux:
+***pacman -S sshfs***
+
 ## Uso
 El uso de este script será como sigue:
 ~~~
