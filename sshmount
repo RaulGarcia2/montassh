@@ -1,0 +1,98 @@
+#!/bin/bash 
+#-xv
+
+comprueba_config() {
+    # Esta funcion lee un fichero de configuración
+    # de ssh y comprueba los párametros HOSTNAME, USER y PORT
+    # para en nombre de Host dado
+    local a=''
+    local b=''
+
+    for arg in "$@"; do
+    while read a b;
+    do
+        #Comprueba si tenemos alguna entrada al HOST dentro del
+        #fichero config de ssh
+
+        #Para hacer indistintas las minusculas y mayusculas
+        shopt -s nocasematch
+        if [ "$a" == "Host" ]; then
+            if [ "$b" == "$HOST" ]; then
+                ESTA=1
+            else
+                #Hemos pasado por una entrada de Host pero no es el que buscamos
+                #
+                ESTA=0
+            fi
+        fi
+
+        #Estamos dentro de una entrada del HOST
+        if [ $ESTA == 1 ]; then
+            a="${a^^}"
+            #Verificamos si tenemos entrada de Port
+            if [ "${a}" == "HOSTNAME" ]; then
+                HOST2=$b
+            #Verificamos si tenemos entrada de Port
+            elif [ "$a" == "PORT" ]; then
+                PUERTO=$b
+            #Verificamos si tenemos entrada de UserName
+            elif [ "$a" == "USER" ]; then
+                USER=$b
+            fi
+        fi
+
+        #Fin de hacer indistintas las minusculas y mayusculas
+        shopt -u nocasematch
+    done < ${arg}
+done
+}
+
+#Comprueba si existe argumento p para el puerto
+if [[ "$1" == "-p" ]];
+then
+   shift
+   PUERTO=$1
+   shift
+else
+   PUERTO=22
+fi
+
+#Lee el último argumento del script y verifica
+#si tiene una @ para identificar host y usuario
+
+if [[ "$1" == *"@"* ]]; then
+   USER=$( echo $1 | cut -d@ -f1 )
+   HOST=$( echo $1 | cut -d@ -f2 )
+else
+   HOST=$1
+   USER=''
+fi
+
+comprueba_config ~/.ssh/config > /dev/null 2>&1
+comprueba_config /etc/ssh/ssh_config.d/*.conf  > /dev/null 2>&1
+
+if [ "$HOST2"n == "n"  ]; then
+    HOST2=$HOST
+fi
+
+if [ "$USER"n == "n"  ]; then
+   USER=$( whoami )
+fi
+
+carpeta="${HOME}/mnt/${HOST}"
+
+REMOTE_FOLDER=`ssh -p ${PUERTO} ${USER}@${HOST2} pwd 2>&1`
+
+if [[ "$REMOTE_FOLDER" == ssh:\ Could\ not\ resolve\ hostname*  ]]; then
+    echo No se ha podido montar ${HOST2}
+else
+    if [ ! -d "${carpeta}" ]; then
+       echo "Creando carpeta ${carpeta}"
+       mkdir -p "${carpeta}"
+    fi
+
+    comando="sshfs -p ${PUERTO} -o idmap=user ${USER}@${HOST2}:${REMOTE_FOLDER} ${carpeta}"
+    echo Ejecutando: ${comando}
+    res= `$comando 2>&1`
+    echo $res
+fi
